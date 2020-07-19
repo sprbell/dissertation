@@ -1,0 +1,106 @@
+import numpy as np
+
+# |0> and |1>
+_0 = np.matrix([[1],[0]])
+_1 = np.matrix([[0],[1]])
+
+# |+> and |->
+_pos = np.matrix([[(1/2)**0.5],[(1/2)**0.5]])
+_neg = np.matrix([[(1/2)**0.5],[-(1/2)**0.5]])
+
+# |i> and |-i>
+_pos_i = np.matrix([[(1/2)**0.5],[((1/2)**0.5j)]])
+_neg_i = np.matrix([[(1/2)**0.5],[(-(1/2)**0.5j)]])
+
+
+# 1-qubit
+_0 = np.matrix([[1],[0]])
+_1 = np.matrix([[0],[1]])
+
+# 2-qubit
+_00 = np.kron(_0,_0)
+_01 = np.kron(_0,_1)
+_10 = np.kron(_1,_0)
+_11 = np.kron(_1,_1)
+    
+# 3-qubit
+_000 = np.kron(_00,_0)
+_001 = np.kron(_00,_1) 
+_010 = np.kron(_01,_0)
+_011 = np.kron(_01,_1)
+_100 = np.kron(_10,_0)
+_101 = np.kron(_10,_1)
+_110 = np.kron(_11,_0)
+_111 = np.kron(_11,_1)
+    
+# X-gate
+X = np.matrix([[0,1],[1,0]])
+# Y-gate
+Y = np.matrix([[0,(-1j)],[(1j),0]])
+# Z-gate
+Z = np.matrix([[1,0],[0,-1]])
+# H-gate
+H = ((1/2)**0.5) * np.matrix([[1,1],[1,-1]])
+    
+# CNOT-gate
+CNOT = np.matrix([[1,0,0,0],
+                  [0,0,0,1],
+                  [0,0,1,0],
+                  [0,1,0,0]])
+# SWAP-gate
+SWAP = np.matrix([[1,0,0,0],
+                  [0,0,1,0],
+                  [0,1,0,0],
+                  [0,0,0,1]])
+    
+# CCNOT-gate
+CCNOT = np.matrix([[1,0,0,0,0,0,0,0],
+                   [0,1,0,0,0,0,0,0],
+                   [0,0,1,0,0,0,0,0],
+                   [0,0,0,1,0,0,0,0],
+                   [0,0,0,0,1,0,0,0],
+                   [0,0,0,0,0,1,0,0],
+                   [0,0,0,0,0,0,0,1],
+                   [0,0,0,0,0,0,1,0]])
+    # CSWAP-gate
+CSWAP = np.matrix([[1,0,0,0,0,0,0,0],
+                   [0,1,0,0,0,0,0,0],
+                   [0,0,1,0,0,0,0,0],
+                   [0,0,0,1,0,0,0,0],
+                   [0,0,0,0,1,0,0,0],
+                   [0,0,0,0,0,0,1,0],
+                   [0,0,0,0,0,1,0,0],
+                   [0,0,0,0,0,0,0,1]])
+    
+def Q_simulator(G_name,qubit):
+    return G_name*qubit
+    
+# measurement
+
+
+def measurement(qubit,M_basis):
+    P = qubit.T*M_basis*qubit
+    qubit_after = (M_basis*qubit)/np.sqrt(P)
+    return P,qubit_after
+    
+# example 
+
+# 1 qubit
+
+qubit = Q_simulator(H,_0)
+M0 = _0*_0.T
+M1 = _1*_1.T
+
+P,qubit_new = measurement(qubit,M1)
+
+# 2 qubit
+
+HX = np.kron(H,X)
+qubit = CNOT*(HX*_00)
+
+M00 = _00*_00.T
+M01 = _01*_01.T
+M10 = _10*_10.T
+M11 = _11*_11.T
+
+P,qubit_new = measurement(qubit,M11)
