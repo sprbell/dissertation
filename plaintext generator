@@ -1,0 +1,137 @@
+import numpy as np
+
+############ plaintext generator ############
+# set conditional probability
+condition_prob_original = [[0.3,0.1,0.4,0.2],
+                           [0.4,0.3,0.1,0.2],
+                           [0.1,0.4,0.2,0.3],
+                           [0.2,0.3,0.1,0.4]]
+# generate plaintext
+def plaintext_generator(size):
+  # size -> the length of the string
+    list_text = ["a","b","c","d"] # initial string
+    for i in range(size-4):
+        if list_text[-1] == "a":
+            letter = np.random.choice(["a","b","c","d"], p = [0.3,0.1,0.4,0.2])
+            list_text.append(letter)
+        elif list_text[-1] == "b":
+            letter = np.random.choice(["a","b","c","d"], p = [0.4,0.3,0.1,0.2])
+            list_text.append(letter)
+        elif list_text[-1] == "c":
+            letter = np.random.choice(["a","b","c","d"], p = [0.1,0.4,0.2,0.3])
+            list_text.append(letter)
+        elif list_text[-1] == "d":
+            letter = np.random.choice(["a","b","c","d"], p = [0.2,0.3,0.1,0.4])
+            list_text.append(letter)
+    return list_text
+
+############ encrypt & decrypt funciton ############
+# set substitution key
+key = {}
+key["a"] = "b"
+key["b"] = "c"
+key["c"] = "d"
+key["d"] = "a"
+print(key)
+
+# encrpyt function
+def substitution_cipher_encrypt(plaintext,key = {}):
+    ciphertext = []
+    for i in range(len(plaintext)):
+        cipher_letter = key[plaintext[i]]
+        ciphertext.append(cipher_letter)
+    return ciphertext
+
+# decrpyt funciton
+def substitution_cipher_decrypt(ciphertext,key = {}):
+    plaintext = []
+    decrypt_key = {v: k for k,v in key.items()}
+    for i in range(len(ciphertext)):
+        plaintext_letter = decrypt_key[ciphertext[i]]
+        plaintext.append(plaintext_letter)
+    return plaintext
+
+############ fitness funciton ############
+# compute joint likelihood
+def compute_likelihood(text,condition_prob):
+    result_all = 0
+    for i in range(len(text)):
+        if i == len(text)-1:
+            break
+        elif text[i] == "a" and text[i+1] == "a":
+            result_prob = condition_prob[0][0]
+        elif text[i] == "a" and text[i+1] == "b":
+            result_prob = condition_prob[0][1]
+        elif text[i] == "a" and text[i+1] == "c":
+            result_prob = condition_prob[0][2]
+        elif text[i] == "a" and text[i+1] == "d":
+            result_prob = condition_prob[0][3]
+        
+        elif text[i] == "b" and text[i+1] == "a":
+            result_prob = condition_prob[1][0]
+        elif text[i] == "b" and text[i+1] == "b":
+            result_prob = condition_prob[1][1]
+        elif text[i] == "b" and text[i+1] == "c":
+            result_prob = condition_prob[1][2]
+        elif text[i] == "b" and text[i+1] == "d":
+            result_prob = condition_prob[1][3]
+            
+        elif text[i] == "c" and text[i+1] == "a":
+            result_prob = condition_prob[2][0]
+        elif text[i] == "c" and text[i+1] == "b":
+            result_prob = condition_prob[2][1]
+        elif text[i] == "c" and text[i+1] == "c":
+            result_prob = condition_prob[2][2]
+        elif text[i] == "c" and text[i+1] == "d":
+            result_prob = condition_prob[2][3]
+            
+        elif text[i] == "d" and text[i+1] == "a":
+            result_prob = condition_prob[3][0]
+        elif text[i] == "d" and text[i+1] == "b":
+            result_prob = condition_prob[3][1]
+        elif text[i] == "d" and text[i+1] == "c":
+            result_prob = condition_prob[3][2]  
+        elif text[i] == "d" and text[i+1] == "d":
+            result_prob = condition_prob[3][3]  
+            
+        result_all += np.log10(result_prob)
+    return result_all
+    
+############ cost funciton ############
+# compute conditional probability
+def conditional_prob(list_text,letter_list = ["a","b","c","d"]):
+    result_all = []
+    for i in range(len(letter_list)):
+        letter = letter_list[i]
+        result = []
+        num_x_a = 0
+        num_x_b = 0
+        num_x_c = 0
+        num_x_d = 0
+        # compute number
+        for i in range(len(list_text)):
+            if i == len(list_text)-1:
+                break
+            elif list_text[i] == letter:
+                if list_text[i+1] == "a":
+                    num_x_a += 1
+                if list_text[i+1] == "b":
+                    num_x_b += 1   
+                if list_text[i+1] == "c":
+                    num_x_c += 1
+                if list_text[i+1] == "d":
+                    num_x_d += 1
+                
+        # compute conditional probability
+        sum_all = num_x_a + num_x_b + num_x_c + num_x_d
+        prob_x_a = num_x_a/sum_all
+        prob_x_b = num_x_b/sum_all
+        prob_x_c = num_x_c/sum_all
+        prob_x_d = num_x_d/sum_all
+        # output result
+        result.append(prob_x_a)
+        result.append(prob_x_b)
+        result.append(prob_x_c)
+        result.append(prob_x_d)
+        result_all.append(result)
+    return result_all
