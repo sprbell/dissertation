@@ -117,7 +117,8 @@ def grover_algorithm(qubit_state, target_qubit_1, target_qubit_2):
     # amplification
     result = 2*sum_all - qubit_state
     return abs(result)
-# Calculate the conditonal probability of each letter of the input string, and calculate the error compared with the original probability
+    
+# Calculate the conditional probability of each letter of the input string, and calculate the error compared with the original probability
 def compute_cost(ciphertext,key,condition_prob_original):
     plaintext = substitution_cipher_decrypt(ciphertext,key = key)
     condition_prob = conditional_prob(plaintext,letter_list = ["a","b","c","d"])
