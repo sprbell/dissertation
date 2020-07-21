@@ -1,0 +1,410 @@
+import numpy as np
+#———————————————————————————————— Define basic functions —————————————————————————————————————————————————————#
+# Set the original conditional probability
+condition_prob_original = [[0.3,0.1,0.4,0.2],
+                           [0.4,0.3,0.1,0.2],
+                           [0.1,0.4,0.2,0.3],
+                           [0.2,0.3,0.1,0.4]]
+# plaintext_generator
+def plaintext_generator(size,condition_prob_original):
+    list_text = ["a","b","c","d"]
+    for i in range(size-4):
+        if list_text[-1] == "a":
+            letter = np.random.choice(["a","b","c","d"], p = condition_prob_original[0])
+            list_text.append(letter)
+        elif list_text[-1] == "b":
+            letter = np.random.choice(["a","b","c","d"], p = condition_prob_original[1])
+            list_text.append(letter)
+        elif list_text[-1] == "c":
+            letter = np.random.choice(["a","b","c","d"], p = condition_prob_original[2])
+            list_text.append(letter)
+        elif list_text[-1] == "d":
+            letter = np.random.choice(["a","b","c","d"], p = condition_prob_original[3])
+            list_text.append(letter)
+    return list_text
+
+# compute conditional prob
+def conditional_prob(list_text,letter_list = ["a","b","c","d"]):
+    result_all = []
+    for i in range(len(letter_list)):
+        letter = letter_list[i]
+        result = []
+        num_x_a = 0
+        num_x_b = 0
+        num_x_c = 0
+        num_x_d = 0
+        # compute number
+        for i in range(len(list_text)):
+            if i == len(list_text)-1:
+                break
+            elif list_text[i] == letter:
+                if list_text[i+1] == "a":
+                    num_x_a += 1
+                if list_text[i+1] == "b":
+                    num_x_b += 1   
+                if list_text[i+1] == "c":
+                    num_x_c += 1
+                if list_text[i+1] == "d":
+                    num_x_d += 1
+                
+        # compute conditional probability
+        sum_all = num_x_a + num_x_b + num_x_c + num_x_d
+        prob_x_a = num_x_a/sum_all
+        prob_x_b = num_x_b/sum_all
+        prob_x_c = num_x_c/sum_all
+        prob_x_d = num_x_d/sum_all
+        # output result
+        result.append(prob_x_a)
+        result.append(prob_x_b)
+        result.append(prob_x_c)
+        result.append(prob_x_d)
+        result_all.append(result)
+    return result_all
+
+# encrpyt function
+def substitution_cipher_encrypt(plaintext,key = {}):
+    ciphertext = []
+    for i in range(len(plaintext)):
+        cipher_letter = key[plaintext[i]]
+        ciphertext.append(cipher_letter)
+    return ciphertext
+    
+# decrypt function
+def substitution_cipher_decrypt(ciphertext,key = {}):
+    plaintext = []
+    decrypt_key = {v: k for k,v in key.items()}
+    for i in range(len(ciphertext)):
+        plaintext_letter = decrypt_key[ciphertext[i]]
+        plaintext.append(plaintext_letter)
+    return plaintext
+    
+# Convert kecy from numeric representation to character representation
+def convert_index_to_letter(input_list):
+    result = []
+    for i in range(len(input_list)):
+        if input_list[i] == 0:
+            result.append("a")
+        elif input_list[i] == 1:
+            result.append("b")
+        elif input_list[i] == 2:
+            result.append("c")
+        elif input_list[i] == 3:
+            result.append("d")
+    return result
+    
+# Add the key corresponding to each letter to the dictionary
+def output_key_dict(input_list):
+    key_dict = {}
+    key_dict["a"] = input_list[0]
+    key_dict["b"] = input_list[1]
+    key_dict["c"] = input_list[2]
+    key_dict["d"] = input_list[3]
+    return key_dict
+    
+# Enter the key represented by a number and output the corresponding dictionary
+def key_num_to_dict(key_num_list):
+    letter_list = convert_index_to_letter(key_num_list)
+    key_dict = output_key_dict(letter_list)
+    return key_dict
+    
+# Simulation execution grover search algorithm
+def grover_algorithm(qubit_state, target_qubit_1, target_qubit_2):
+    # convert sign
+    qubit_state[target_qubit_1] = -qubit_state[target_qubit_1]
+    qubit_state[target_qubit_2] = -qubit_state[target_qubit_2]
+    # average amplitude
+    sum_all = 1/len(qubit_state)*(sum(qubit_state))
+    # amplification
+    result = 2*sum_all - qubit_state
+    return abs(result)
+# Calculate the conditonal probability of each letter of the input string, and calculate the error compared with the original probability
+def compute_cost(ciphertext,key,condition_prob_original):
+    plaintext = substitution_cipher_decrypt(ciphertext,key = key)
+    condition_prob = conditional_prob(plaintext,letter_list = ["a","b","c","d"])
+    return abs(np.array(condition_prob) - np.array(condition_prob_original)).sum()
+    
+#———————————————————————————————— main function —————————————————————————————————————————————————————#
+# The main function of the algorithm    
+def main_f(text_lenght, condition_prob_original,key = []):
+    # randomly generate the correct encrypted key
+    if len(key) == 0:
+        correct_key = np.random.choice(range(4),4,replace = False).tolist()
+    # set the correct encrypted key 
+    else:
+        correct_key = key
+    correct_key = convert_index_to_letter(correct_key)
+    correct_key = output_key_dict(correct_key)
+    # Randomly generate plaintext
+    plaintext = plaintext_generator(text_lenght,condition_prob_original)
+    # Encrypt plaintext into ciphertext according to key
+    ciphertext = substitution_cipher_encrypt(plaintext,key = correct_key)
+    
+    # create initial qubit state
+    H = ((1/2)**0.5) * np.matrix([[1,1],[1,-1]])
+    _0 = np.matrix([[1],[0]])
+    initial_qubit = np.kron(np.kron(np.kron(H,H),H),H)*np.kron(np.kron(np.kron(_0,_0),_0),_0)
+
+    # compute initial cost
+    random_num_key = np.random.choice(range(4),4,replace = False).tolist()
+    initial_key = key_num_to_dict(random_num_key)
+    initial_cost = compute_cost(ciphertext,initial_key,condition_prob_original)
+    
+    # start algorithm
+    current_key_num = random_num_key
+    last_cost = initial_cost
+    # [0] <> [1] [2] [3] Try to exchange the first and second positions, the first and third positions, the first and the fourth positions in turn, a total of 3 times
+    for i in range(3):
+        # exchange two of the current key
+        current_key_num[0],current_key_num[i+1] = current_key_num[i+1],current_key_num[0]
+        # Generate dictionary key
+        current_key = key_num_to_dict(current_key_num)
+        # compute current cost
+        current_cost = compute_cost(ciphertext,current_key,condition_prob_original)
+        
+        # If the changed cost is smaller, then mark the position of the exchanged key and execute the grover algorithm
+        if current_cost < last_cost:
+            target_qubit_1 = current_key_num[0]
+            target_qubit_2 = current_key_num[i+1] + 4*i
+            initial_qubit = grover_algorithm(initial_qubit, target_qubit_1, target_qubit_2)
+            
+        # If the changed cost is greater, then restore the key before the exchange and execute the grover algorithm on the corresponding bit
+        elif current_cost > last_cost:
+            current_key_num[0],current_key_num[i+1] = current_key_num[i+1],current_key_num[0]
+            target_qubit_1 = current_key_num[0]
+            target_qubit_2 = current_key_num[i+1] + 4*i
+            initial_qubit = grover_algorithm(initial_qubit, target_qubit_1, target_qubit_2)
+            current_cost = last_cost
+        last_cost = current_cost
+        
+    # [1] <> [2] [3] Try to exchange the sencond and third positions, the sencond and fourth positions, a total of 2 times
+    for i in range(2):
+        i += 1
+        current_key_num[1],current_key_num[i+1] = current_key_num[i+1],current_key_num[1]
+        current_key = key_num_to_dict(current_key_num)
+        current_cost = compute_cost(ciphertext,current_key,condition_prob_original)
+    
+        if current_cost < last_cost:
+            target_qubit_1 = current_key_num[1] + 4
+            target_qubit_2 = current_key_num[i+1] + 4*i
+            initial_qubit = grover_algorithm(initial_qubit, target_qubit_1, target_qubit_2)
+        elif current_cost > last_cost:
+            current_key_num[1],current_key_num[i+1] = current_key_num[i+1],current_key_num[1]
+            target_qubit_1 = current_key_num[1] + 4
+            target_qubit_2 = current_key_num[i+1] + 4*i
+            initial_qubit = grover_algorithm(initial_qubit, target_qubit_1, target_qubit_2)
+            current_cost = last_cost
+        last_cost = current_cost
+        
+    # [2] <> [3] Try to exchange the third and fourth positions, a total of 1 times
+    current_key_num[2],current_key_num[3] = current_key_num[3],current_key_num[2]
+    current_key = key_num_to_dict(current_key_num)
+    current_cost = compute_cost(ciphertext,current_key,condition_prob_original)
+
+    if current_cost < last_cost:
+        target_qubit_1 = current_key_num[2] + 4*2
+        target_qubit_2 = current_key_num[3] + 4*3
+        initial_qubit = grover_algorithm(initial_qubit, target_qubit_1, target_qubit_2)
+    elif current_cost > last_cost:
+        current_key_num[2],current_key_num[3] = current_key_num[3],current_key_num[2]
+        target_qubit_1 = current_key_num[2] + 4*2
+        target_qubit_2 = current_key_num[3] + 4*3
+        initial_qubit = grover_algorithm(initial_qubit, target_qubit_1, target_qubit_2)
+        current_cost = last_cost
+        
+    # Output the qubit after the algorithm runs and the correct key
+    return initial_qubit,correct_key
+    
+#———————————————————————————— Define measurement function ————————————————————————————————————————————————————————#
+# measure final qubit state
+
+# 1-qubit
+_0 = np.matrix([[1],[0]])
+_1 = np.matrix([[0],[1]])
+
+# 2-qubit
+_00 = np.kron(_0,_0)
+_01 = np.kron(_0,_1)
+_10 = np.kron(_1,_0)
+_11 = np.kron(_1,_1)
+
+# 3-qubit
+_000 = np.kron(_00,_0)
+_001 = np.kron(_00,_1) 
+_010 = np.kron(_01,_0)
+_011 = np.kron(_01,_1)
+_100 = np.kron(_10,_0)
+_101 = np.kron(_10,_1)
+_110 = np.kron(_11,_0)
+_111 = np.kron(_11,_1)
+
+# 4-qubit
+_0000 = np.kron(_000,_0)
+_0001 = np.kron(_000,_1)
+_0010 = np.kron(_001,_0)
+_0011 = np.kron(_001,_1)
+
+_0100 = np.kron(_010,_0)
+_0101 = np.kron(_010,_1)
+_0110 = np.kron(_011,_0)
+_0111 = np.kron(_011,_1)
+
+_1000 = np.kron(_100,_0)
+_1001 = np.kron(_100,_1)
+_1010 = np.kron(_101,_0)
+_1011 = np.kron(_101,_1)
+
+_1100 = np.kron(_110,_0)
+_1101 = np.kron(_110,_1)
+_1110 = np.kron(_111,_0)
+_1111 = np.kron(_111,_1)
+
+# measure basis
+M_list = []
+M0000 = _0000*_0000.T
+M0001 = _0001*_0001.T
+M0010 = _0010*_0010.T
+M0011 = _0011*_0011.T
+
+M0100 = _0100*_0100.T
+M0101 = _0101*_0101.T
+M0110 = _0110*_0110.T
+M0111 = _0111*_0111.T
+
+M1000 = _1000*_1000.T
+M1001 = _1001*_1001.T
+M1010 = _1010*_1010.T
+M1011 = _1011*_1011.T
+
+M1100 = _1100*_1100.T
+M1101 = _1101*_1101.T
+M1110 = _1110*_1110.T
+M1111 = _1111*_1111.T
+
+M_list.append(M0000)
+M_list.append(M0001)
+M_list.append(M0010)
+M_list.append(M0011)
+
+M_list.append(M0100)
+M_list.append(M0101)
+M_list.append(M0110)
+M_list.append(M0111)
+
+M_list.append(M1000)
+M_list.append(M1001)
+M_list.append(M1010)
+M_list.append(M1011)
+
+M_list.append(M1100)
+M_list.append(M1101)
+M_list.append(M1110)
+M_list.append(M1111)
+
+# Projection measurement, set unitary matrix operation
+def measurement(qubit,M_basis):
+    prob = qubit.T*M_basis*qubit
+    qubit_after = (M_basis*qubit)/np.sqrt(prob)
+    return prob
+    
+# In all cases, find the key with the highest probability corresponding to each letter
+def measurement_final_key(qubit,M_list):
+    result_list = []
+    for i in range(len(M_list)):
+        prob = measurement(qubit,M_list[i]).tolist()
+        prob = prob[0][0]
+        result_list.append(prob)
+    return result_list
+    
+# Find the index of the largest value in the list
+# If the probability is the same in both cases, then both are saved
+def find_max_index(input_list):
+    input_set = set(input_list)
+    result = []
+    if len(input_set) == len(input_list):
+        max_index = input_list.index(max(input_list))
+        result.append(max_index)
+    else:
+        max_value = max(input_list)
+        for i in range(len(input_list)):
+            if input_list[i] == max_value:
+                result.append(i)
+    return result
+    
+#Output the guessed key dictionary
+def output_prob_key(measure_result):
+    key_list = []
+    key_a_list = find_max_index(measure_result[0:4])
+    key_b_list = find_max_index(measure_result[4:8])
+    key_c_list = find_max_index(measure_result[8:12])
+    key_d_list = find_max_index(measure_result[12:16])
+    
+    key_a_letter = convert_index_to_letter(key_a_list)
+    key_b_letter = convert_index_to_letter(key_b_list)
+    key_c_letter = convert_index_to_letter(key_c_list)
+    key_d_letter = convert_index_to_letter(key_d_list)
+    
+    key_list.append(key_a_letter)
+    key_list.append(key_b_letter)
+    key_list.append(key_c_letter)
+    key_list.append(key_d_letter)
+    # convert to letter key
+    key_dict = {}
+    key_dict["a"] = key_list[0]
+    key_dict["b"] = key_list[1]
+    key_dict["c"] = key_list[2]
+    key_dict["d"] = key_list[3]
+    return key_dict
+    
+# Execute the above function
+def get_key(qubit,M_list):
+    prob_all = measurement_final_key(qubit,M_list)
+    result = output_prob_key(prob_all)
+    return result
+    
+#————————————————————————————— Test the results ————————————————————————————————————————————————————————#
+# Calculate the accuracy of the correct key and guessed key
+def compute_accuracy(correct_key,guess_key):
+    letter_list = ["a","b","c","d"]
+    accuracy = 0
+    for i in letter_list:
+        if len(guess_key[i]) == 1:
+            if correct_key[i] == guess_key[i][0]:
+                accuracy += 1 
+        else:
+            if correct_key[i] in guess_key[i]:
+                accuracy += 1
+    return accuracy/4
+# The percentage of cases where the calculation accuracy rate is greater than 50%
+def compute_whole_accuracy(result):
+    num = 0
+    for i in range(len(result)):
+        if result[i] >= 0.5:
+            num += 1
+    return num/len(result)
+    
+#————————————————————————————————— result ————————————————————————————————————————————————————————————#
+# Given a key, the string length is 200, and it is executed 100 times, the proportion of cases where the accuracy rate is greater than 0.5 is about 57%
+same_key_result = []
+for i in range(100): # execute 100 times
+    # set string length is 200, and correct key is [1,2,3,0]
+    output_qubit,correct_key = main_f(200, condition_prob_original,key = [1,2,3,0])
+    guess_key = get_key(output_qubit,M_list)
+    accuracy = compute_accuracy(correct_key,guess_key)
+    same_key_result.append(accuracy)
+same_key_test_rate = compute_whole_accuracy(same_key_result,give_rate = 0.5)
+print(same_key_rate)
+
+# Randomly generate key, string length is 200, total execution 100 times, the proportion of cases where the accuracy rate is greater than 0.5 is about 60%
+random_key_result = []
+for i in range(100):
+    output_qubit,correct_key = main_f(200, condition_prob_original)
+    guess_key = get_key(output_qubit,M_list)
+    accuracy = compute_accuracy(correct_key,guess_key)
+    random_key_result.append(accuracy)
+random_key_test_rate = compute_whole_accuracy(random_key_result,give_rate = 0.5)
+print(random_key_test_rate)
+
+
+
+
+
