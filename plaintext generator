@@ -1,29 +1,26 @@
 import numpy as np
 
+############ conditional probability generator ############
+
+def conditional_probability_generator(letter_list):
+    letter_num = len(letter_list)
+    result = []
+    for i in range(letter_num):
+        random_prob = np.random.randint(1,10,size = letter_num)
+        normalise_prob = (random_prob/sum(random_prob)).tolist()
+        result.append(normalise_prob)
+    return result
+
 ############ plaintext generator ############
-# set conditional probability
-condition_prob_original = [[0.3,0.1,0.4,0.2],
-                           [0.4,0.3,0.1,0.2],
-                           [0.1,0.4,0.2,0.3],
-                           [0.2,0.3,0.1,0.4]]
-# generate plaintext
-def plaintext_generator(size):
-  # size -> the length of the string
-    list_text = ["a","b","c","d"] # initial string
-    for i in range(size-4):
-        if list_text[-1] == "a":
-            letter = np.random.choice(["a","b","c","d"], p = [0.3,0.1,0.4,0.2])
-            list_text.append(letter)
-        elif list_text[-1] == "b":
-            letter = np.random.choice(["a","b","c","d"], p = [0.4,0.3,0.1,0.2])
-            list_text.append(letter)
-        elif list_text[-1] == "c":
-            letter = np.random.choice(["a","b","c","d"], p = [0.1,0.4,0.2,0.3])
-            list_text.append(letter)
-        elif list_text[-1] == "d":
-            letter = np.random.choice(["a","b","c","d"], p = [0.2,0.3,0.1,0.4])
-            list_text.append(letter)
-    return list_text
+
+def plaintext_generator(letter_list,condition_prob_original, text_length):
+    letter_list_initial = letter_list.copy()
+    for i in range(text_length - len(letter_list)):
+        last_letter = letter_list[-1]
+        index = letter_list.index(last_letter)
+        new_letter = np.random.choice(letter_list_initial, p = condition_prob_original[index])
+        letter_list.append(new_letter)
+    return letter_list
 
 ############ encrypt & decrypt funciton ############
 # set substitution key
